@@ -23,7 +23,7 @@
   <a href="#license"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
   <a href="#"><img src="https://img.shields.io/badge/python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.9+"></a>
   <a href="#"><img src="https://img.shields.io/badge/sqlite-FTS5%20%2B%20WAL-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite"></a>
-  <a href="#"><img src="https://img.shields.io/badge/LLM-Claude%20Opus%204.6-cc785c?style=flat-square" alt="LLM Powered"></a>
+  <a href="#"><img src="https://img.shields.io/badge/LLM-Any%20Provider-cc785c?style=flat-square" alt="LLM Powered"></a>
   <a href="https://happycapy.ai"><img src="https://img.shields.io/badge/powered%20by-HappyCapy-ff8c42?style=flat-square" alt="Powered by HappyCapy"></a>
 </p>
 
@@ -44,7 +44,7 @@ sequenceDiagram
     participant Agent as Claude Code Agent
     participant Cortex as Capy Cortex
     participant DB as SQLite + FTS5
-    participant LLM as Sonnet / Haiku
+    participant LLM as Smart / Fast Model
 
     Agent->>Cortex: Session starts
     Cortex->>DB: Load anti-patterns + principles
@@ -55,9 +55,9 @@ sequenceDiagram
     Cortex-->>Agent: Top 5 relevant rules
 
     Agent->>Cortex: Tool fails
-    Cortex->>LLM: Causal analysis (Sonnet)
+    Cortex->>LLM: Causal analysis (Smart Model)
     LLM-->>Cortex: Root cause + rule
-    Cortex->>LLM: Quality score (Haiku)
+    Cortex->>LLM: Quality score (Fast Model)
     LLM-->>Cortex: Score 0-4
     Cortex->>DB: Store if score >= 2
 
@@ -65,7 +65,7 @@ sequenceDiagram
     Cortex->>DB: Credit helpful rules (+confidence)
 
     Agent->>Cortex: Session ends
-    Cortex->>LLM: Extract learnings (Sonnet)
+    Cortex->>LLM: Extract learnings (Smart Model)
     Cortex->>DB: Store corrections + preferences
 ```
 
@@ -74,7 +74,7 @@ No configuration. No manual tagging. No prompt engineering. Install it and it st
 ## Key Capabilities
 
 - **Zero-config learning** -- 7 hooks capture errors, corrections, and preferences automatically
-- **LLM-powered extraction** -- Sonnet analyzes root causes; Haiku scores quality (only stores insights scoring 2+/4)
+- **LLM-powered extraction** -- Smart model analyzes root causes; fast model scores quality (only stores insights scoring 2+/4)
 - **Triple Fusion Retrieval** -- FTS5 full-text + TF-IDF embeddings + Entity Graph, merged via Reciprocal Rank Fusion
 - **Self-curating** -- automated deduplication, clustering, principle synthesis, confidence decay
 - **Reinforcement loop** -- rules that lead to tool success get boosted; unhelpful rules fade
@@ -90,7 +90,7 @@ No configuration. No manual tagging. No prompt engineering. Install it and it st
 
 - Python 3.9+
 - `scikit-learn` (for TF-IDF embeddings)
-- Access to any OpenAI-compatible API (OpenAI, Anthropic via OpenRouter, Ollama, LiteLLM, etc.)
+- Access to **any** LLM via a chat completions API (see provider examples below)
 
 ### Install
 
@@ -103,17 +103,77 @@ pip install scikit-learn
 
 # Initialize the database
 python3 ~/.claude/skills/capy-cortex/scripts/setup.py
-
-# Set your API key (works with any OpenAI-compatible provider)
-export CORTEX_API_KEY="your-api-key"
-
-# Optional: custom endpoint (defaults to https://api.openai.com/v1)
-# export CORTEX_API_URL="https://openrouter.ai/api/v1"
-
-# Optional: override default models
-# export CORTEX_SMART_MODEL="gpt-4o"       # causal analysis + synthesis
-# export CORTEX_FAST_MODEL="gpt-4o-mini"   # quality scoring
 ```
+
+### Configure Your LLM Provider
+
+Cortex is **provider-agnostic**. Set three env vars and you are done. Pick your provider:
+
+<details>
+<summary><b>OpenRouter</b> (access Claude, GPT, Gemini, Llama, Grok -- all models, one API)</summary>
+
+```bash
+export CORTEX_API_URL="https://openrouter.ai/api/v1"
+export CORTEX_API_KEY="sk-or-..."
+export CORTEX_SMART_MODEL="anthropic/claude-sonnet-4.6"   # or google/gemini-2.5-pro, openai/gpt-4o
+export CORTEX_FAST_MODEL="anthropic/claude-haiku-4.5"     # or google/gemini-2.5-flash, openai/gpt-4o-mini
+```
+</details>
+
+<details>
+<summary><b>OpenAI</b> (GPT-4o, GPT-4o-mini)</summary>
+
+```bash
+export CORTEX_API_URL="https://api.openai.com/v1"
+export CORTEX_API_KEY="sk-..."
+export CORTEX_SMART_MODEL="gpt-4o"
+export CORTEX_FAST_MODEL="gpt-4o-mini"
+```
+</details>
+
+<details>
+<summary><b>Google Gemini</b> (via OpenAI-compatible endpoint)</summary>
+
+```bash
+export CORTEX_API_URL="https://generativelanguage.googleapis.com/v1beta/openai"
+export CORTEX_API_KEY="AIza..."
+export CORTEX_SMART_MODEL="gemini-2.5-pro"
+export CORTEX_FAST_MODEL="gemini-2.5-flash"
+```
+</details>
+
+<details>
+<summary><b>xAI Grok</b></summary>
+
+```bash
+export CORTEX_API_URL="https://api.x.ai/v1"
+export CORTEX_API_KEY="xai-..."
+export CORTEX_SMART_MODEL="grok-3"
+export CORTEX_FAST_MODEL="grok-3-mini"
+```
+</details>
+
+<details>
+<summary><b>Ollama</b> (local, free, no API key needed)</summary>
+
+```bash
+export CORTEX_API_URL="http://localhost:11434/v1"
+export CORTEX_API_KEY="ollama"
+export CORTEX_SMART_MODEL="llama3"
+export CORTEX_FAST_MODEL="llama3"
+```
+</details>
+
+<details>
+<summary><b>Together AI / Fireworks / Any OpenAI-compatible endpoint</b></summary>
+
+```bash
+export CORTEX_API_URL="https://api.together.xyz/v1"   # or https://api.fireworks.ai/inference/v1
+export CORTEX_API_KEY="your-key"
+export CORTEX_SMART_MODEL="meta-llama/Llama-3-70b-chat-hf"
+export CORTEX_FAST_MODEL="meta-llama/Llama-3-8b-chat-hf"
+```
+</details>
 
 That is it. The hooks auto-register through the `SKILL.md` manifest. Your agent now has persistent memory.
 
@@ -173,12 +233,12 @@ flowchart TD
 | Stage | What Happens | Model | Latency |
 |-------|-------------|-------|---------|
 | **Capture** | 7 hooks intercept agent lifecycle events | None | <1ms |
-| **Extract** | Causal analysis of failures | Sonnet 4.6 | ~2s |
-| **Gate** | Quality scoring on 4 dimensions | Haiku 4.5 | ~500ms |
+| **Extract** | Causal analysis of failures | CORTEX_SMART_MODEL | ~2s |
+| **Gate** | Quality scoring on 4 dimensions | CORTEX_FAST_MODEL | ~500ms |
 | **Store** | Deduplicated, topic-classified, graph-linked | None | <5ms |
 | **Retrieve** | Triple Fusion: FTS5 + TF-IDF + Graph via RRF | None | <10ms |
 | **Credit** | Success reinforcement boosts helpful rules | None | <1ms |
-| **Consolidate** | Cluster, merge, synthesize principles | Sonnet 4.6 | ~30s/batch |
+| **Consolidate** | Cluster, merge, synthesize principles | CORTEX_SMART_MODEL | ~30s/batch |
 
 ### Quality Gate
 
@@ -330,18 +390,20 @@ Be honest about tradeoffs:
 - **Short-lived agents** -- if your agent runs once and is discarded, there is nothing to learn across sessions
 - **Deterministic pipelines** -- if your agent follows a fixed script with no errors or variation, memory adds no value
 - **Extremely sensitive environments** -- Cortex stores error messages and user corrections in a local SQLite database; if your errors contain secrets, review the data or use encryption
-- **Cost-constrained setups** -- the LLM extraction pipeline calls Sonnet + Haiku per error; if you process hundreds of errors per session, API costs add up
+- **Cost-constrained setups** -- the LLM extraction pipeline calls your smart + fast models per error; if you process hundreds of errors per session, API costs add up (use Ollama for free local inference)
 
 ## Configuration
 
-Cortex works out of the box with zero configuration. For customization:
+Set three environment variables to connect Cortex to **any** LLM provider:
 
-| Environment Variable | Default | Purpose |
-|---------------------|---------|---------|
-| `CORTEX_API_KEY` | (required) | API key for LLM calls (also reads `OPENAI_API_KEY`) |
-| `CORTEX_API_URL` | `https://api.openai.com/v1` | OpenAI-compatible endpoint (also reads `OPENAI_BASE_URL`) |
-| `CORTEX_SMART_MODEL` | `anthropic/claude-sonnet-4.6` | Model for causal analysis and synthesis |
-| `CORTEX_FAST_MODEL` | `anthropic/claude-haiku-4.5` | Model for quality scoring |
+| Environment Variable | Required | Purpose |
+|---------------------|----------|---------|
+| `CORTEX_API_URL` | **yes** | Your provider's chat completions base URL |
+| `CORTEX_API_KEY` | **yes** | API key for your provider |
+| `CORTEX_SMART_MODEL` | **yes** | Capable model for causal analysis (e.g. `gpt-4o`, `claude-sonnet-4.6`, `gemini-2.5-pro`) |
+| `CORTEX_FAST_MODEL` | **yes** | Fast model for quality scoring (e.g. `gpt-4o-mini`, `claude-haiku-4.5`, `gemini-2.5-flash`) |
+
+Backward-compatible fallbacks: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `AI_GATEWAY_API_KEY` are also read if `CORTEX_*` vars are not set.
 
 Key constants (in source):
 

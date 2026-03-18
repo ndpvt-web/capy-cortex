@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Capy Cortex - Embedding-based semantic retrieval.
-Uses AI Gateway to generate embeddings for rules, then cosine similarity for retrieval.
+Uses TF-IDF embeddings for rules, then cosine similarity for retrieval.
 Falls back to FTS5 if embeddings are unavailable."""
 
 import json
@@ -13,13 +13,18 @@ import urllib.error
 
 DB_PATH = Path(__file__).parent.parent / "cortex.db"
 EMBEDDINGS_DIR = Path(__file__).parent.parent / "embeddings"
-DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions"
-API_URL = os.environ.get("CORTEX_API_URL",
-         os.environ.get("AI_GATEWAY_URL",
-         os.environ.get("OPENAI_BASE_URL", DEFAULT_API_URL)))
-if not API_URL.endswith("/chat/completions"):
-    API_URL = API_URL.rstrip("/") + "/chat/completions"
-MODEL = os.environ.get("CORTEX_FAST_MODEL", "anthropic/claude-haiku-4.5")
+
+# Provider-agnostic: reads from same env vars as llm_extract.py
+_raw_url = os.environ.get("CORTEX_API_URL",
+           os.environ.get("AI_GATEWAY_URL",
+           os.environ.get("OPENAI_BASE_URL", "")))
+if _raw_url:
+    API_URL = _raw_url.rstrip("/")
+    if not API_URL.endswith("/chat/completions"):
+        API_URL = API_URL + "/chat/completions"
+else:
+    API_URL = ""
+MODEL = os.environ.get("CORTEX_FAST_MODEL", "")
 API_KEY = os.environ.get("CORTEX_API_KEY",
           os.environ.get("AI_GATEWAY_API_KEY",
           os.environ.get("OPENAI_API_KEY", "")))

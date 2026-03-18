@@ -12,20 +12,44 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions"
-API_URL = os.environ.get("CORTEX_API_URL",
-         os.environ.get("AI_GATEWAY_URL",
-         os.environ.get("OPENAI_BASE_URL", DEFAULT_API_URL)))
-if not API_URL.endswith("/chat/completions"):
-    API_URL = API_URL.rstrip("/") + "/chat/completions"
+# --- Provider-agnostic configuration ---
+# Cortex works with ANY LLM provider that exposes an OpenAI-compatible
+# chat completions endpoint (the de facto industry standard).
+# Supported: OpenAI, Anthropic (via OpenRouter/LiteLLM), Google Gemini,
+# xAI Grok, Ollama, Together AI, Fireworks, Azure OpenAI, and more.
+#
+# Required env vars (set ONE of each group):
+#   API URL:  CORTEX_API_URL  or  OPENAI_BASE_URL
+#   API Key:  CORTEX_API_KEY  or  OPENAI_API_KEY
+#   Models:   CORTEX_SMART_MODEL  and  CORTEX_FAST_MODEL
+
+_raw_url = os.environ.get("CORTEX_API_URL",
+           os.environ.get("AI_GATEWAY_URL",
+           os.environ.get("OPENAI_BASE_URL", "")))
+if _raw_url:
+    API_URL = _raw_url.rstrip("/")
+    if not API_URL.endswith("/chat/completions"):
+        API_URL = API_URL + "/chat/completions"
+else:
+    API_URL = ""  # Not configured -- LLM calls will be skipped gracefully
+
 API_KEY = os.environ.get("CORTEX_API_KEY",
           os.environ.get("AI_GATEWAY_API_KEY",
           os.environ.get("OPENAI_API_KEY", "")))
 DB_PATH = Path(__file__).parent.parent / "cortex.db"
 
-HAIKU = os.environ.get("CORTEX_FAST_MODEL", "anthropic/claude-haiku-4.5")
-SONNET = os.environ.get("CORTEX_SMART_MODEL", "anthropic/claude-sonnet-4.6")
-MODELS = [HAIKU, SONNET]  # Fallback chain
+# Model identifiers -- format depends on your provider:
+#   OpenRouter:  "anthropic/claude-sonnet-4.6", "google/gemini-2.5-flash", "openai/gpt-4o"
+#   OpenAI:      "gpt-4o", "gpt-4o-mini"
+#   Ollama:      "llama3", "mistral"
+#   Together:    "meta-llama/Llama-3-70b-chat-hf"
+CORTEX_FAST = os.environ.get("CORTEX_FAST_MODEL", "")
+CORTEX_SMART = os.environ.get("CORTEX_SMART_MODEL", "")
+
+# Backward-compat aliases (used by consolidate.py imports)
+HAIKU = CORTEX_FAST
+SONNET = CORTEX_SMART
+MODELS = [m for m in [CORTEX_FAST, CORTEX_SMART] if m]  # Only non-empty
 
 HEADERS = {
     "Content-Type": "application/json",
@@ -74,8 +98,10 @@ Session messages:
 
 def _call_llm(prompt, timeout=15, max_tokens=200, model=None):
     """Call LLM with model fallback. Returns parsed JSON or None."""
-    if not API_KEY:
+    if not API_KEY or not API_URL:
         return None
+    if model and not model.strip():
+        model = None  # Ignore empty model strings
     models = [model] if model else MODELS
     for m in models:
         try:
@@ -241,7 +267,10 @@ def score_existing_rule(rule_text):
 
 if __name__ == "__main__":
     print("=== Capy Cortex v2 LLM Extract - Self-Test ===")
-    print(f"API Key: {'present' if API_KEY else 'MISSING'}")
+    print(f"API URL:      {'configured' if API_URL else 'MISSING  -- set CORTEX_API_URL'}")
+    print(f"API Key:      {'present' if API_KEY else 'MISSING  -- set CORTEX_API_KEY'}")
+    print(f"Smart model:  {CORTEX_SMART or 'MISSING  -- set CORTEX_SMART_MODEL'}")
+    print(f"Fast model:   {CORTEX_FAST or 'MISSING  -- set CORTEX_FAST_MODEL'}")
     print(f"Quality threshold: {QUALITY_THRESHOLD}/4\n")
 
     print("Test 1: extract_root_cause (backward compat)")
