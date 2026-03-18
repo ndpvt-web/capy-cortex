@@ -1,9 +1,11 @@
 <p align="center">
   <a href="https://happycapy.ai">
-    <img src=".github/happycapy-logo.png" alt="HappyCapy" width="120">
+    <img src=".github/happycapy-logo.png" alt="HappyCapy" width="200">
   </a>
-  <br>
-  <sub><strong>Sponsored by <a href="https://happycapy.ai">HappyCapy</a></strong> -- Unlimited 24/7 Claude Code with Opus 4.6. The agent-native computer for everyone.</sub>
+  <br><br>
+  <strong>Sponsored by <a href="https://happycapy.ai">HappyCapy</a></strong><br>
+  Unlimited 24/7 Claude Code access with Opus 4.6. The agent-native computer for everyone.<br><br>
+  <em>Thank you to <a href="https://happycapy.ai">HappyCapy</a> for providing unlimited Claude Code access around the clock with Opus 4.6 -- this project would not exist without their generous support.</em>
 </p>
 
 ---
