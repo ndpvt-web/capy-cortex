@@ -291,7 +291,7 @@ def _synthesize_principle_llm(cluster_rules):
     """Use Sonnet LLM to synthesize a principle from clustered rules.
     Returns (principle_text, confidence) or (None, 0)."""
     sys.path.insert(0, str(SCRIPTS_DIR))
-    from llm_extract import _call_llm
+    from llm_extract import _call_llm, SONNET
 
     # Determine dominant category
     categories = [r["category"] for r in cluster_rules]
@@ -309,7 +309,7 @@ def _synthesize_principle_llm(cluster_rules):
 
     try:
         result = _call_llm(prompt, timeout=15, max_tokens=200,
-                           model="anthropic/claude-sonnet-4.6")
+                           model=SONNET)
         if result and result.get("principle"):
             principle = result["principle"][:400]
             confidence = min(max(result.get("confidence", 0.8), 0.5), 0.95)

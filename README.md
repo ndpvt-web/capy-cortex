@@ -90,7 +90,7 @@ No configuration. No manual tagging. No prompt engineering. Install it and it st
 
 - Python 3.9+
 - `scikit-learn` (for TF-IDF embeddings)
-- Access to an OpenAI-compatible API endpoint (Claude Sonnet + Haiku)
+- Access to any OpenAI-compatible API (OpenAI, Anthropic via OpenRouter, Ollama, LiteLLM, etc.)
 
 ### Install
 
@@ -104,8 +104,15 @@ pip install scikit-learn
 # Initialize the database
 python3 ~/.claude/skills/capy-cortex/scripts/setup.py
 
-# Set your API endpoint and key
-export AI_GATEWAY_API_KEY="your-api-key"
+# Set your API key (works with any OpenAI-compatible provider)
+export CORTEX_API_KEY="your-api-key"
+
+# Optional: custom endpoint (defaults to https://api.openai.com/v1)
+# export CORTEX_API_URL="https://openrouter.ai/api/v1"
+
+# Optional: override default models
+# export CORTEX_SMART_MODEL="gpt-4o"       # causal analysis + synthesis
+# export CORTEX_FAST_MODEL="gpt-4o-mini"   # quality scoring
 ```
 
 That is it. The hooks auto-register through the `SKILL.md` manifest. Your agent now has persistent memory.
@@ -331,8 +338,10 @@ Cortex works out of the box with zero configuration. For customization:
 
 | Environment Variable | Default | Purpose |
 |---------------------|---------|---------|
-| `AI_GATEWAY_API_KEY` | (required) | API key for LLM calls |
-| `AI_GATEWAY_URL` | `https://ai-gateway.happycapy.ai/api/v1` | OpenAI-compatible endpoint |
+| `CORTEX_API_KEY` | (required) | API key for LLM calls (also reads `OPENAI_API_KEY`) |
+| `CORTEX_API_URL` | `https://api.openai.com/v1` | OpenAI-compatible endpoint (also reads `OPENAI_BASE_URL`) |
+| `CORTEX_SMART_MODEL` | `anthropic/claude-sonnet-4.6` | Model for causal analysis and synthesis |
+| `CORTEX_FAST_MODEL` | `anthropic/claude-haiku-4.5` | Model for quality scoring |
 
 Key constants (in source):
 

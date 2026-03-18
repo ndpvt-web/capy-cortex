@@ -13,9 +13,16 @@ import urllib.error
 
 DB_PATH = Path(__file__).parent.parent / "cortex.db"
 EMBEDDINGS_DIR = Path(__file__).parent.parent / "embeddings"
-API_URL = "https://ai-gateway.happycapy.ai/api/v1/chat/completions"
-MODEL = "anthropic/claude-haiku-4.5"
-API_KEY = os.environ.get("AI_GATEWAY_API_KEY", "")
+DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions"
+API_URL = os.environ.get("CORTEX_API_URL",
+         os.environ.get("AI_GATEWAY_URL",
+         os.environ.get("OPENAI_BASE_URL", DEFAULT_API_URL)))
+if not API_URL.endswith("/chat/completions"):
+    API_URL = API_URL.rstrip("/") + "/chat/completions"
+MODEL = os.environ.get("CORTEX_FAST_MODEL", "anthropic/claude-haiku-4.5")
+API_KEY = os.environ.get("CORTEX_API_KEY",
+          os.environ.get("AI_GATEWAY_API_KEY",
+          os.environ.get("OPENAI_API_KEY", "")))
 
 # We use a simple approach: generate a compact text representation for each rule,
 # then use TF-IDF with sklearn if available, or hash-based embeddings as fallback.

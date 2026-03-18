@@ -12,12 +12,19 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-API_URL = "https://ai-gateway.happycapy.ai/api/v1/chat/completions"
-API_KEY = os.environ.get("AI_GATEWAY_API_KEY", "")
+DEFAULT_API_URL = "https://api.openai.com/v1/chat/completions"
+API_URL = os.environ.get("CORTEX_API_URL",
+         os.environ.get("AI_GATEWAY_URL",
+         os.environ.get("OPENAI_BASE_URL", DEFAULT_API_URL)))
+if not API_URL.endswith("/chat/completions"):
+    API_URL = API_URL.rstrip("/") + "/chat/completions"
+API_KEY = os.environ.get("CORTEX_API_KEY",
+          os.environ.get("AI_GATEWAY_API_KEY",
+          os.environ.get("OPENAI_API_KEY", "")))
 DB_PATH = Path(__file__).parent.parent / "cortex.db"
 
-HAIKU = "anthropic/claude-haiku-4.5"
-SONNET = "anthropic/claude-sonnet-4.6"
+HAIKU = os.environ.get("CORTEX_FAST_MODEL", "anthropic/claude-haiku-4.5")
+SONNET = os.environ.get("CORTEX_SMART_MODEL", "anthropic/claude-sonnet-4.6")
 MODELS = [HAIKU, SONNET]  # Fallback chain
 
 HEADERS = {
