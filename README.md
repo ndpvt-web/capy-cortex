@@ -1,4 +1,14 @@
 <p align="center">
+  <a href="https://happycapy.ai">
+    <img src=".github/happycapy-logo.png" alt="HappyCapy" width="120">
+  </a>
+  <br>
+  <sub><strong>Sponsored by <a href="https://happycapy.ai">HappyCapy</a></strong> -- Unlimited 24/7 Claude Code with Opus 4.6. The agent-native computer for everyone.</sub>
+</p>
+
+---
+
+<p align="center">
   <h1 align="center">Capy Cortex</h1>
   <p align="center">
     <strong>Autonomous memory and learning system for AI coding agents.</strong><br>
@@ -11,7 +21,8 @@
   <a href="#license"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
   <a href="#"><img src="https://img.shields.io/badge/python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.9+"></a>
   <a href="#"><img src="https://img.shields.io/badge/sqlite-FTS5%20%2B%20WAL-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite"></a>
-  <a href="#"><img src="https://img.shields.io/badge/LLM-Claude%20Sonnet%20%2B%20Haiku-cc785c?style=flat-square" alt="LLM Powered"></a>
+  <a href="#"><img src="https://img.shields.io/badge/LLM-Claude%20Opus%204.6-cc785c?style=flat-square" alt="LLM Powered"></a>
+  <a href="https://happycapy.ai"><img src="https://img.shields.io/badge/powered%20by-HappyCapy-ff8c42?style=flat-square" alt="Powered by HappyCapy"></a>
 </p>
 
 ---
@@ -26,13 +37,34 @@ You fix a deployment bug on Monday. On Wednesday, the same agent hits the same b
 
 ## How It Works (30-Second Version)
 
-```
-Session starts  -->  Cortex injects known anti-patterns + principles
-User sends prompt  -->  Cortex retrieves task-relevant rules (FTS5 + TF-IDF + Entity Graph)
-Tool fails  -->  LLM analyzes root cause, quality-gates the insight, stores if worthy
-Tool succeeds  -->  Credits the rule that helped (reinforcement learning)
-Session ends  -->  Extracts corrections, preferences, learnings from full transcript
-Background  -->  Consolidates duplicates, clusters rules into principles, decays stale knowledge
+```mermaid
+sequenceDiagram
+    participant Agent as Claude Code Agent
+    participant Cortex as Capy Cortex
+    participant DB as SQLite + FTS5
+    participant LLM as Sonnet / Haiku
+
+    Agent->>Cortex: Session starts
+    Cortex->>DB: Load anti-patterns + principles
+    Cortex-->>Agent: Inject known knowledge
+
+    Agent->>Cortex: User sends prompt
+    Cortex->>DB: Triple Fusion Retrieval (FTS5 + TF-IDF + Graph)
+    Cortex-->>Agent: Top 5 relevant rules
+
+    Agent->>Cortex: Tool fails
+    Cortex->>LLM: Causal analysis (Sonnet)
+    LLM-->>Cortex: Root cause + rule
+    Cortex->>LLM: Quality score (Haiku)
+    LLM-->>Cortex: Score 0-4
+    Cortex->>DB: Store if score >= 2
+
+    Agent->>Cortex: Tool succeeds
+    Cortex->>DB: Credit helpful rules (+confidence)
+
+    Agent->>Cortex: Session ends
+    Cortex->>LLM: Extract learnings (Sonnet)
+    Cortex->>DB: Store corrections + preferences
 ```
 
 No configuration. No manual tagging. No prompt engineering. Install it and it starts learning.
@@ -94,51 +126,37 @@ After a few sessions, run it again. You will see rules accumulating.
 
 ## Architecture
 
-```
-                    +------------------+
-                    |   Claude Code    |
-                    |   Agent Session  |
-                    +--------+---------+
-                             |
-              7 Hook Events  |
-         +-------------------+-------------------+
-         |         |         |         |         |
-    +----v---+ +---v----+ +-v------+ +v-------+ +v--------+
-    |Session | |Prompt  | |Pre-Bash| |Tool    | |Stop     |
-    |Start   | |Submit  | |Guard   | |Success/| |Session  |
-    |        | |        | |        | |Failure | |End      |
-    +----+---+ +---+----+ +---+----+ +---+----+ +----+----+
-         |         |           |         |            |
-         v         v           v         v            v
-    Load anti-  Triple     Block     LLM extract  Extract
-    patterns +  Fusion     known     root cause   session
-    principles  Retrieval  dangerous + quality    learnings
-    + prefs     (3-signal  commands  gate (2/4)   + corrections
-                RRF merge)                        + preferences
-         |         |           |         |            |
-         +-------------------+-+---------+------------+
-                             |
-                    +--------v---------+
-                    | SQLite + FTS5    |
-                    | + WAL mode       |
-                    |                  |
-                    | rules            |
-                    | principles       |
-                    | anti_patterns    |
-                    | entities         |
-                    | knowledge_edges  |
-                    | events (audit)   |
-                    +--------+---------+
-                             |
-                    +--------v---------+
-                    | Background Jobs  |
-                    |                  |
-                    | Consolidation    |
-                    | TF-IDF retrain   |
-                    | Graph rebuild    |
-                    | Confidence decay |
-                    | Temporal expiry  |
-                    +------------------+
+```mermaid
+flowchart TD
+    A["Claude Code Agent Session"] -->|"7 Hook Events"| B["Session Start"]
+    A --> C["Prompt Submit"]
+    A --> D["Pre-Bash Guard"]
+    A --> E["Tool Success / Failure"]
+    A --> F["Session End"]
+
+    B -->|"Load"| B1["Anti-patterns + Principles + Preferences"]
+    C -->|"Retrieve"| C1["Triple Fusion Retrieval\n(FTS5 + TF-IDF + Graph → RRF)"]
+    D -->|"Check"| D1["Block Known\nDangerous Commands"]
+    E -->|"Analyze"| E1["LLM Root Cause\n+ Quality Gate (2/4)"]
+    E -->|"Credit"| E2["Boost Helpful Rules\n(Reinforcement)"]
+    F -->|"Extract"| F1["Corrections + Preferences\n+ Session Learnings"]
+
+    B1 --> G[("SQLite + FTS5 + WAL\n─────────────\nrules\nprinciples\nanti_patterns\nentities\nknowledge_edges\nevents")]
+    C1 --> G
+    D1 --> G
+    E1 --> G
+    E2 --> G
+    F1 --> G
+
+    G --> H["Background Jobs"]
+    H --> H1["Consolidation"]
+    H --> H2["TF-IDF Retrain"]
+    H --> H3["Graph Rebuild"]
+    H --> H4["Confidence Decay"]
+
+    style A fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style G fill:#f5a623,stroke:#d4881a,color:#fff
+    style H fill:#7b68ee,stroke:#5a4abf,color:#fff
 ```
 
 ### The Learning Pipeline
@@ -170,20 +188,22 @@ Every extracted insight is scored 0-4 on four dimensions before storage:
 
 Three independent signals, fused with Reciprocal Rank Fusion (K=60):
 
-```
-Signal 1: FTS5 keyword search (fast, exact match)
-Signal 2: TF-IDF cosine similarity (semantic, handles synonyms)
-Signal 3: Entity graph traversal (relational, 1-hop + 2-hop)
-                    |
-                    v
-         Reciprocal Rank Fusion
-         score = sum(1 / (K + rank_i))
-                    |
-                    v
-         Quality gates + workspace boost + helpful boost
-                    |
-                    v
-         Top 5 rules injected into context
+```mermaid
+flowchart LR
+    Q["User Query"] --> S1["FTS5\nKeyword Search"]
+    Q --> S2["TF-IDF\nCosine Similarity"]
+    Q --> S3["Entity Graph\n1-hop + 2-hop"]
+
+    S1 -->|"rank list"| RRF["Reciprocal Rank Fusion\nscore = Σ 1/(K + rank_i)"]
+    S2 -->|"rank list"| RRF
+    S3 -->|"rank list"| RRF
+
+    RRF --> QG["Quality Gates\nconfidence ≥ 0.5"]
+    QG --> WB["Workspace Boost\n+ Helpful Boost"]
+    WB --> OUT["Top 5 Rules\nInjected into Context"]
+
+    style RRF fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    style OUT fill:#50c878,stroke:#3a9a5c,color:#fff
 ```
 
 ## Project Structure
